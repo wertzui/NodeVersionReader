@@ -96,4 +96,29 @@ describe("End-to-end: read pipeline", () => {
     const result = runReadPipeline(file, ["private=true"], "json");
     expect(JSON.parse(result)).toHaveLength(0);
   });
+
+  it("excludes private packages and includes packages with no 'private' field using an anchored negation filter", () => {
+    tmp.createPackageJson(packageJsonFixtures.withPrivateTrue("private-pkg"), "packages/private-pkg");
+    tmp.createPackageJson(packageJsonFixtures.withVersionOnly("public-pkg-no-private-field"), "packages/public-pkg-no-private-field");
+    tmp.createPackageJson(packageJsonFixtures.withPrivateFalse("public-pkg-explicit-false"), "packages/public-pkg-explicit-false");
+    const { file: rootFile } = tmp.createWorkspaceRoot(["packages/*"]);
+
+    const result = runReadPipeline(rootFile, ["private=^(?!true$)"], "json");
+    const names = (JSON.parse(result) as { name: string }[]).map((r) => r.name).sort();
+
+    expect(names).toEqual(["public-pkg-explicit-false", "public-pkg-no-private-field"]);
+  });
+
+  it("demonstrates that an unanchored negative lookahead filter matches everything (regex pitfall)", () => {
+    tmp.createPackageJson(packageJsonFixtures.withPrivateTrue("private-pkg"), "packages/private-pkg");
+    tmp.createPackageJson(packageJsonFixtures.withPrivateFalse("public-pkg"), "packages/public-pkg");
+    const { file: rootFile } = tmp.createWorkspaceRoot(["packages/*"]);
+
+    // `(?!true)` without `^...$` anchors is a common mistake: it never excludes anything because
+    // the lookahead can succeed starting at a later position within the matched string.
+    const result = runReadPipeline(rootFile, ["private=(?!true)"], "json");
+    const names = (JSON.parse(result) as { name: string }[]).map((r) => r.name).sort();
+
+    expect(names).toEqual(["private-pkg", "public-pkg"]);
+  });
 });

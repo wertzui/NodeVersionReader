@@ -91,9 +91,34 @@ describe("PackageJsonParser", () => {
       expect(parser.matchesFilter(json, "PRIVATE", /true/i)).toBe(true);
     });
 
-    it("returns false when the key does not exist", () => {
+    it("returns false when the key does not exist and the pattern requires non-empty content", () => {
       const json = JSON.parse(packageJsonFixtures.withVersionOnly());
-      expect(parser.matchesFilter(json, "nonExistentKey", /.*/)).toBe(false);
+      expect(parser.matchesFilter(json, "nonExistentKey", /^true$/i)).toBe(false);
+    });
+
+    it("tests the pattern against an empty string when the key does not exist (absent = falsy)", () => {
+      const json = JSON.parse(packageJsonFixtures.withVersionOnly());
+      // A negative-lookahead filter for "not private" should match packages that have no
+      // "private" field at all, since absence is equivalent to the falsy default.
+      expect(parser.matchesFilter(json, "private", /^(?!true$)/i)).toBe(true);
+    });
+
+    it("does not exclude an absent key when using an anchored negation filter", () => {
+      const json = JSON.parse(packageJsonFixtures.withVersionOnly("no-private-field"));
+      expect(parser.matchesFilter(json, "private", /^(?!true$)/i)).toBe(true);
+    });
+
+    it("excludes a package explicitly marked private when using an anchored negation filter", () => {
+      const json = JSON.parse(packageJsonFixtures.withPrivateTrue());
+      expect(parser.matchesFilter(json, "private", /^(?!true$)/i)).toBe(false);
+    });
+
+    it("demonstrates that an UNANCHORED negative lookahead never excludes anything (regex pitfall)", () => {
+      // (?!true) with no start anchor can match at a later position in the string (e.g. after
+      // consuming "t", the remaining "rue" doesn't start with "true", so the lookahead succeeds).
+      // This is why filters MUST anchor with ^...$ around a negative lookahead, e.g. ^(?!true$).
+      const json = JSON.parse(packageJsonFixtures.withPrivateTrue());
+      expect(parser.matchesFilter(json, "private", /(?!true)/i)).toBe(true);
     });
   });
 

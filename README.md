@@ -387,6 +387,11 @@ case-insensitively, at any depth in the `package.json` document — including ne
 as `engines.node` or `publishConfig.access`, and array elements) and `Value` is a regular
 expression that must match the stringified value.
 
+If `key` does not exist anywhere in the document, the pattern is tested against an **empty
+string** rather than automatically failing the filter. This matters for fields like `private`
+that have a well-defined falsy default when absent — an absent `"private"` field is treated the
+same as `"private": false` for filtering purposes.
+
 ```bash
 # Only packages marked as private
 node-version read --filter "private=^true$"
@@ -396,6 +401,23 @@ node-version read --filter "node=>=18"
 
 # Combine filters – ALL must match
 node-version read -f "private=^(?!true$)" -f "version=^[2-9]"
+```
+
+### ⚠️ Anchor negative-lookahead filters with `^...$`
+
+A common mistake is writing an **unanchored** negation like `private=(?!true)`, expecting it to
+match everything that isn't `"true"`. It doesn't: `.test()` succeeds if a match exists *anywhere*
+in the string, and a zero-width lookahead can always succeed starting at a later position — so
+`/(?!true)/i.test("true")` is actually `true`, meaning this filter never excludes anything.
+
+Always anchor negative lookaheads with `^` and `$`:
+
+```bash
+# ❌ WRONG – never excludes anything, (?!true) matches even inside "true"
+node-version read --filter "private=(?!true)"
+
+# ✅ CORRECT – anchored, actually excludes private:true packages
+node-version read --filter "private=^(?!true$)"
 ```
 
 ---

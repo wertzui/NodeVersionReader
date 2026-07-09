@@ -52,9 +52,17 @@ export class PackageJsonParser {
   /**
    * Returns `true` when `doc` contains at least one key named `key` (at any depth, matched
    * case-insensitively) whose stringified value matches `pattern`.
+   *
+   * When `key` does not exist anywhere in `doc`, the pattern is tested against an empty string
+   * rather than automatically failing the match. This matters for filters that use negation
+   * (e.g. `private=^(?!true$)` to select non-private packages): most `package.json` fields
+   * (like `private`) have a well-defined falsy default when absent, so an absent key should be
+   * treated the same as an explicit falsy/empty value, not silently excluded from the result.
    */
   public matchesFilter(doc: unknown, key: string, pattern: RegExp): boolean {
-    return this.findMatchingValues(doc, key).some((value) => pattern.test(value));
+    const values = this.findMatchingValues(doc, key);
+    if (values.length === 0) return pattern.test("");
+    return values.some((value) => pattern.test(value));
   }
 
   // -------------------------------------------------------------------------
