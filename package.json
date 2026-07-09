@@ -1,6 +1,6 @@
 {
   "name": "node-version-reader",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "A Node.js CLI tool that reads and checks version information from package.json files, for enforcing version bumps in pull requests and showing which packages had their version changed.",
   "type": "module",
   "license": "MIT",
