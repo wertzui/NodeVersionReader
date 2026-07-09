@@ -483,12 +483,17 @@ instead of a long-lived token. This requires:
    - **Allowed actions:** `npm publish`
 2. **`id-token: write` permission** on the `publish` job (already set in the workflow) so GitHub
    Actions can issue an OIDC token.
-3. **npm CLI ≥ 11.5.1 and Node ≥ 22.14.0** — the workflow uses Node 24.x and force-updates npm
-   before publishing, since older npm versions don't know how to request/exchange OIDC tokens
-   and will fail with `ENEEDAUTH`.
+3. **npm CLI ≥ 11.5.1 and Node ≥ 22.14.0** — the workflow uses Node 24.x, which already bundles a
+   sufficiently new npm CLI. Older npm versions don't know how to request/exchange OIDC tokens
+   and fail with `ENEEDAUTH`.
 
 No `NPM_TOKEN` secret is required (or used) for publishing. Provenance attestations are generated
 automatically since trusted publishing is used from a public repository/package.
+
+> **Do not** run `npm install -g npm@latest` to "ensure" a new-enough npm CLI. Self-upgrading npm
+> in place is known to corrupt its own `node_modules` tree (missing optional dependencies such as
+> `sigstore`, which `libnpmpublish` needs for provenance), causing `npm publish` to fail with
+> `MODULE_NOT_FOUND: Cannot find module 'sigstore'`. Node's bundled npm is already new enough.
 
 ### Manual dispatch
 
