@@ -1,0 +1,68 @@
+{
+  "name": "node-version-reader",
+  "version": "1.0.0",
+  "description": "A Node.js CLI tool that reads and checks version information from package.json files, for enforcing version bumps in pull requests and showing which packages had their version changed.",
+  "type": "module",
+  "license": "MIT",
+  "author": "wertzui",
+  "homepage": "https://github.com/wertzui/NodeVersionReader",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/wertzui/NodeVersionReader.git"
+  },
+  "bugs": {
+    "url": "https://github.com/wertzui/NodeVersionReader/issues"
+  },
+  "keywords": [
+    "node",
+    "cli",
+    "version",
+    "package.json",
+    "semver",
+    "monorepo"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "bin": {
+    "node-version": "./dist/cli.js"
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsx src/cli.ts",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "prepublishOnly": "npm run typecheck && npm run test && npm run build"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.17.0",
+    "@types/node": "^22.10.2",
+    "@vitest/coverage-v8": "^2.1.8",
+    "eslint": "^9.17.0",
+    "tsup": "^8.3.5",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2",
+    "typescript-eslint": "^8.18.2",
+    "vitest": "^2.1.8"
+  },
+  "dependencies": {
+    "commander": "^12.1.0"
+  }
+}
