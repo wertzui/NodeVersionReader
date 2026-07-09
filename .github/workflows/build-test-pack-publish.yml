@@ -73,8 +73,16 @@ jobs:
       - name: Read package metadata
         id: pkg
         run: |
-          echo "name=$(node -p 'require(\"./package.json\").name')" >> "$GITHUB_OUTPUT"
-          echo "version=$(node -p 'require(\"./package.json\").version')" >> "$GITHUB_OUTPUT"
+          echo "name=$(node -p "require('./package.json').name")" >> "$GITHUB_OUTPUT"
+          echo "version=$(node -p "require('./package.json').version")" >> "$GITHUB_OUTPUT"
+
+      - name: Verify package metadata was read
+        run: |
+          if [ -z "${{ steps.pkg.outputs.version }}" ]; then
+            echo "::error::Failed to read package version from package.json" >&2
+            exit 1
+          fi
+          echo "Publishing ${{ steps.pkg.outputs.name }}@${{ steps.pkg.outputs.version }}"
 
       - name: Tag release
         run: |
