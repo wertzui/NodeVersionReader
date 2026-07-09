@@ -467,16 +467,28 @@ Runs automatically on every push to `main` and can also be triggered manually.
 | **Test** | `npm test` |
 | **Build** | `npm run build` |
 | **Check version bump** | Runs `node-version check` on pull requests against the PR base branch — blocks the build if the package version was not bumped |
-| **Tag & Publish** | Tags the commit `v<version>` and publishes to npm with provenance |
+| **Tag & Publish** | Tags the commit `v<version>` and publishes to npm using trusted publishing (OIDC) |
 | **GitHub Release** | Creates a GitHub release on the new tag with auto-generated notes |
 
-### Required repository secret
+### Publishing authentication — npm trusted publishing (OIDC)
 
-| Secret | Description |
-| -------- | ------------- |
-| `NPM_TOKEN` | Automation token from [npmjs.com](https://www.npmjs.com/) with publish permission for the package |
+The publish job authenticates to npm via [trusted publishing](https://docs.npmjs.com/trusted-publishers)
+instead of a long-lived token. This requires:
 
-Add it under **Settings → Secrets and variables → Actions → New repository secret**.
+1. **A trusted publisher configured on npmjs.com** for the `node-version-reader` package:
+   `npmjs.com` → package → **Settings** → **Trusted Publisher** → GitHub Actions, with:
+   - **Organization or user:** `wertzui`
+   - **Repository:** `NodeVersionReader`
+   - **Workflow filename:** `build-test-pack-publish.yml` (filename only, must match exactly)
+   - **Allowed actions:** `npm publish`
+2. **`id-token: write` permission** on the `publish` job (already set in the workflow) so GitHub
+   Actions can issue an OIDC token.
+3. **npm CLI ≥ 11.5.1 and Node ≥ 22.14.0** — the workflow uses Node 24.x and force-updates npm
+   before publishing, since older npm versions don't know how to request/exchange OIDC tokens
+   and will fail with `ENEEDAUTH`.
+
+No `NPM_TOKEN` secret is required (or used) for publishing. Provenance attestations are generated
+automatically since trusted publishing is used from a public repository/package.
 
 ### Manual dispatch
 
